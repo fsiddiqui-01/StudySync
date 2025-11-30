@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin • StudySync</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    body { font-family:"Poppins",sans-serif; margin:0; background:#f5f7fb; }
+    header { background:#3b4cca; color:white; padding:18px 20px; }
+    nav a { color:white; margin-right:18px; text-decoration:none; }
+    main { max-width:1000px; margin:30px auto; padding:0 18px; }
+    .card {
+      background:white; padding:22px; margin-bottom:30px;
+      border-radius:14px; box-shadow:0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    table { width:100%; border-collapse:collapse; margin-top:20px; }
+    th, td { padding:10px; border-bottom:1px solid #ddd; }
+    th { background:#eef0f7; }
+
+    button {
+      background:#c0392b;
+      color:white;
+      border:none;
+      padding:8px 12px;
+      border-radius:8px;
+      cursor:pointer;
+      font-weight:500;
+    }
+    button:hover { opacity:0.85; }
+
+    .stats-row {
+      display:flex;
+      flex-wrap:wrap;
+      gap:16px;
+      margin-top:10px;
+    }
+    .stat-pill {
+      background:#eef0f7;
+      padding:10px 14px;
+      border-radius:999px;
+      font-size:14px;
+      font-weight:500;
+    }
+
+    .video-banner { width: 100%; margin: 0; height: 125px; overflow: hidden;}
+    .banner-video { width: 100%; height: 100%; object-fit: cover;}
+  </style>
+</head>
+
+<body>
+
+<div class="video-banner">
+    <video autoplay muted playsinline class="banner-video">
+        <source src="{{ url_for('static', filename='videos/StudySyncVidLogo.mp4') }}" type="video/mp4">
+    </video>
+</div>
+
+<header>
+  <h1>Admin Panel</h1>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/profile">Profile</a>
+    <a href="/availability">Availability</a>
+    <a href="/add_courses">My Courses</a>
+    <a href="/search_groups">Find Groups</a>
+    <a href="/create_group">Create Group</a>
+    <a href="/my_groups">My Groups</a>
+    <a href="/admin">Admin</a>
+  </nav>
+</header>
+
+<main>
+
+  <!-- Admin overview (special info only admin sees) -->
+  <section class="card">
+    <h2>Dashboard Overview</h2>
+    <div class="stats-row">
+      <div class="stat-pill">👩‍🎓 Students: {{ stats.num_students }}</div>
+      <div class="stat-pill">📚 Courses: {{ stats.num_courses }}</div>
+      <div class="stat-pill">👥 Study Groups: {{ stats.num_groups }}</div>
+      <div class="stat-pill">🧩 Group Memberships: {{ stats.num_memberships }}</div>
+    </div>
+    <p style="margin-top:16px; font-size:14px;">
+      You are logged in as the <strong>administrator</strong>. From here you can review all data
+      and remove any study group if needed.
+    </p>
+  </section>
+
+  <!-- Students -->
+  <section class="card">
+    <h2>All Students</h2>
+
+    <table>
+      <tr>
+        <th>Email</th>
+        <th>Name</th>
+        <th>Major</th>
+        <th>Year</th>
+        <th>Preferred Mode</th>
+      </tr>
+
+      {% for s in students %}
+      <tr>
+        <td>{{ s.email }}</td>
+        <td>{{ s.first_name }} {{ s.last_name }}</td>
+        <td>{{ s.major }}</td>
+        <td>{{ s.class_year }}</td>
+        <td>{{ s.preferred_mode }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </section>
+
+  <!-- Courses -->
+  <section class="card">
+    <h2>All Courses</h2>
+
+    <table>
+      <tr>
+        <th>Course ID</th>
+        <th>Subject</th>
+        <th>Number</th>
+        <th>Section</th>
+        <th>Title</th>
+      </tr>
+
+      {% for c in courses %}
+      <tr>
+        <td>{{ c.course_id }}</td>
+        <td>{{ c.subject }}</td>
+        <td>{{ c.course_number }}</td>
+        <td>{{ c.section }}</td>
+        <td>{{ c.title }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </section>
+
+  <!-- Study Groups -->
+  <section class="card">
+    <h2>All Study Groups</h2>
+
+    <table>
+      <tr>
+        <th>Group</th>
+        <th>Course</th>
+        <th>Day</th>
+        <th>Time</th>
+        <th>Mode</th>
+        <th>Size</th>
+        <th>Action (Admin)</th>
+      </tr>
+
+      {% for g in groups %}
+      <tr>
+        <td>{{ g.group_name }}</td>
+        <td>{{ g.subject }} {{ g.course_number }}</td>
+        <td>{{ g.meeting_day }}</td>
+        <td>{{ g.start_time }}–{{ g.end_time }}</td>
+        <td>{{ g.meeting_mode }}</td>
+        <td>{{ g.member_count }}/{{ g.max_size }}</td>
+
+        <td>
+          <!-- IMPORTANT: admin-only delete route -->
+          <form action="/admin/delete_group" method="POST"
+                onsubmit="return confirm('Delete this group permanently (admin)?');">
+            <input type="hidden" name="group_id" value="{{ g.group_id }}">
+            <button type="submit">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </section>
+
+  <!-- Group Members -->
+  <section class="card">
+    <h2>Group Memberships</h2>
+
+    <table>
+      <tr>
+        <th>Group</th>
+        <th>Email</th>
+        <th>Role</th>
+      </tr>
+
+      {% for m in members %}
+      <tr>
+        <td>{{ m.group_id }}</td>
+        <td>{{ m.email }}</td>
+        <td>{{ m.role }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </section>
+
+</main>
+
+</body>
+</html>
